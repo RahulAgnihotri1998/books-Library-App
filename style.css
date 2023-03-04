@@ -4,7 +4,7 @@
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    background-color: #f2f2f2;
+    background-color: rgb(242, 242, 242);
     color: #333;
     font-family: 'Roboto', sans-serif;
 }
@@ -15,8 +15,11 @@ header{
     align-items: center;
     width: 100%;
     padding: 18px 30px;
-    background-color: #fff;
+    background-color: rgb(242, 242, 242);
     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+}
+header h2{
+    background-color:rgb(242, 242, 242); ;
 }
 
 nav{
@@ -42,7 +45,7 @@ nav a:hover{
     font-size: 18px;
     text-decoration: none;
     color: #fff;
-    background-color: #333;
+    background-color:rgb(242, 242, 242);;
     padding: 10px 20px;
     border-radius: 10px;
     cursor: pointer;
