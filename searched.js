@@ -1,87 +1,93 @@
+const search = document.querySelector('.search');
+const cardContainer = document.querySelector('.container')
+const inputBtn = document.querySelector('.input-btn');
+const bookResults = document.querySelector('.bookResults');
+
+let bookCards = [];
+document.querySelectorAll('.card') ? bookCards = document.querySelectorAll('.card') : bookCards = [];
+const bookResultsShow = document.querySelector('.bookResults');
+
 let searchHistory = [];
 localStorage.getItem('searchHistory') ? searchHistory = JSON.parse(localStorage.getItem('searchHistory')) : searchHistory = [];
-const searchList = document.querySelector('.search-lists');
 
-let count = 1;
-searchHistory.map(search => {
-    searchList.innerHTML += `
-    <div class="search-items">
-        <div class="id-name">
-            <div class="search-id">${count++}.</div>
-            <div class="search-name">${search.search}</div>
-        </div>
-        <div class="date-time">Searched On :${search.date} at ${search.time}</div>
-    </div>
-    `
-})
+inputBtn.addEventListener('click', (e) => {
+    e.preventDefault();
 
-const cardContainer = document.querySelector('.container')
-let searchItems;
-document.querySelectorAll('.search-items') ? searchItems = document.querySelectorAll('.search-items') : searchItems = "";
+    bookResults.innerHTML = search.value;
 
-searchItems.forEach(elem => {
-    const search = elem.querySelector('.search-name').innerText;
-    elem.addEventListener('click', () => {
+    let myArr = search.value.split(' ');
+    let newSearch = myArr.join('+')
 
+    if (search.value != "") {
 
-        if (search.value != "") {
-            cardContainer.classList.remove('hide');
-            async function fetchingData() {
-                const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${search}`);
-                const data = await response.json();
-                let bookStore = [];
+        let searchHistory = [];
+        localStorage.getItem('searchHistory') ? searchHistory = JSON.parse(localStorage.getItem('searchHistory')) : searchHistory = [];
 
-                const dataItems = data.items;
-                dataItems.map(arrItems => {
-                    const bookInfo = arrItems.volumeInfo;
-                    const books = {
-                        id: arrItems.id,
-                        image: bookInfo.imageLinks.thumbnail,
-                        title: bookInfo.title,
-                        author: bookInfo.authors == undefined ? bookInfo.authors = ["NA"] : bookInfo.authors = bookInfo.authors[0],
-                        pageCount: bookInfo.pageCount,
-                        publisher: bookInfo.publisher
-                    }
+        const date = new Date();
+        const searchHistoryNow = {
+            date: date.toLocaleDateString(),
+            time: date.toLocaleTimeString(),
+            search: search.value,
+        }
+        searchHistory.push(searchHistoryNow);
+        localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
 
-                    if (bookStore.length < dataItems.length) {
-                        bookStore.push(books);
-                    }
-                    localStorage.setItem('bookStore', JSON.stringify(bookStore));
-                })
+        cardContainer.classList.remove('hide');
+        async function fetchingData() {
+            const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${newSearch}`);
+            const data = await response.json();
+            let bookStore = [];
 
-                const cardWrapper = document.querySelector('.card-wrapper');
-                JSON.parse(localStorage.getItem('bookStore')) ?
-                    JSON.parse(localStorage.getItem('bookStore')) : bookStore = [];
-                cardWrapper.innerHTML = "";
-                bookStore.map(item => {
+            const dataItems = data.items;
+            dataItems.map(arrItems => {
+                
+                const bookInfo = arrItems.volumeInfo;
+                const books = {
+                    id: arrItems.id,
+                    image: bookInfo.imageLinks.thumbnail,
+                    title: bookInfo.title,
+                    author: bookInfo.authors == undefined ? bookInfo.authors = ["NA"] : bookInfo.authors = bookInfo.authors[0],
+                    pageCount: bookInfo.pageCount,
+                    publisher: bookInfo.publisher,
+                    buyLink: bookInfo.buyLink || 'https://www.google.com/search?q=' + encodeURIComponent(books.title)
+                }
+                if (bookStore.length < dataItems.length) {
+                    bookStore.push(books);
+                }
+                localStorage.setItem('bookStore', JSON.stringify(bookStore));
+            })
 
-                    item.name == undefined ? item.name = 'NA' : item.name;
-                    item.title == undefined ? item.title = 'NA' : item.title;
-                    item.author == undefined ? item.author = 'NA' : item.author;
-                    item.pageCount == undefined ? item.pageCount = 'NA' : item.pageCount;
-                    item.publisher == undefined ? item.publisher = 'NA' : item.publisher;
+            const cardWrapper = document.querySelector('.card-wrapper');
+            JSON.parse(localStorage.getItem('bookStore')) ?
+                JSON.parse(localStorage.getItem('bookStore')) : bookStore = [];
+            cardWrapper.innerHTML = "";
+            bookStore.map(item => {
 
-                    cardWrapper.innerHTML += `
-                    <div class="card">
-                        <img class="image-top" src=${item.image} alt="${item.name}">
-                        <div class="card-body">
-                            <h5 class="card-title">${item.title}</h5>
-                            <p class="card-author">Author: ${item.author}</p>
-                            <p class="card-page-count">Page Count: ${item.pageCount}</p>
-                            <p class="card-publisher">Publisher: ${item.publisher}</p>
-                        </div>
-                        <div class="btn">
-                            <button class="buy-now">Buy Now</button>
-                        </div>
+                item.name == undefined ? item.name = 'NA' : item.name;
+                item.title == undefined ? item.title = 'NA' : item.title;
+                item.pageCount == undefined ? item.pageCount = 'NA' : item.pageCount;
+                item.publisher == undefined ? item.publisher = 'NA' : item.publisher;
+
+                cardWrapper.innerHTML += `
+                <div class="card">
+                    <img class="image-top" src=${item.image} alt="${item.name}">
+                    <div class="card-body">
+                        <h5 class="card-title">${item.title}</h5>
+                        <p class="card-author">Author: ${item.author}</p>
+                        <p class="card-page-count">Page Count: ${item.pageCount}</p>
+                        <p class="card-publisher">Publisher: ${item.publisher}</p>
                     </div>
-                    `
-                })
-            }
-            fetchingData();
+                    <div class="btn">
+                        <a href="${item.buyLink}" target="_blank"><button class="buy-now">Buy Now</button></a>
+                    </div>
+                </div>
+                `
+            })
+        }
+        fetchingData();
 
-        }
-        else {
-            cardContainer.classList.add('hide');
-        }
-    })
+    }
+    else {
+        cardContainer.classList.add('hide');
+    }
 })

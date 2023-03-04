@@ -1,74 +1,64 @@
+
 const search = document.querySelector('.search');
-const cardContainer = document.querySelector('.container')
+
+const cardContainer = document.querySelector('.container');
 const inputBtn = document.querySelector('.input-btn');
 const bookResults = document.querySelector('.bookResults');
 
-let bookCards = [];
-document.querySelectorAll('.card') ? bookCards = document.querySelectorAll('.card') : bookCards = [];
+let bookCards = document.querySelectorAll('.card');
 const bookResultsShow = document.querySelector('.bookResults');
 
-let searchHistory = [];
-localStorage.getItem('searchHistory') ? searchHistory = JSON.parse(localStorage.getItem('searchHistory')) : searchHistory = [];
+let searchHistory = JSON.parse(localStorage.getItem('searchHistory')) || [];
 
-inputBtn.addEventListener('click', (e) => {
-    e.preventDefault();
+inputBtn.addEventListener('click', async (e) => {
+e.preventDefault();
 
-    bookResults.innerHTML = search.value;
 
-    let myArr = search.value.split(' ');
-    let newSearch = myArr.join('+')
+bookResults.innerHTML = search.value;
 
-    if (search.value != "") {
+let myArr = search.value.split(' ');
+let newSearch = myArr.join('+');
 
-        let searchHistory = [];
-        localStorage.getItem('searchHistory') ? searchHistory = JSON.parse(localStorage.getItem('searchHistory')) : searchHistory = [];
+if (search.value !== '') {
 
-        const date = new Date();
-        const searchHistoryNow = {
-            date: date.toLocaleDateString(),
-            time: date.toLocaleTimeString(),
-            search: search.value,
-        }
-        searchHistory.push(searchHistoryNow);
-        localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
+    const date = new Date();
+    const searchHistoryNow = {
+        date: date.toLocaleDateString(),
+        time: date.toLocaleTimeString(),
+        search: search.value,
+    };
+    searchHistory.push(searchHistoryNow);
+    localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
 
-        cardContainer.classList.remove('hide');
-        async function fetchingData() {
-            const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${newSearch}`);
-            const data = await response.json();
-            let bookStore = [];
+    cardContainer.classList.remove('hide');
 
-            const dataItems = data.items;
-            dataItems.map(arrItems => {
-                
-                const bookInfo = arrItems.volumeInfo;
-                const books = {
-                    id: arrItems.id,
-                    image: bookInfo.imageLinks.thumbnail,
-                    title: bookInfo.title,
-                    author: bookInfo.authors == undefined ? bookInfo.authors = ["NA"] : bookInfo.authors = bookInfo.authors[0],
-                    pageCount: bookInfo.pageCount,
-                    publisher: bookInfo.publisher
-                }
-                console.log(arrItems.volumeInfo.authors)
-                if (bookStore.length < dataItems.length) {
-                    bookStore.push(books);
-                }
-                localStorage.setItem('bookStore', JSON.stringify(bookStore));
-            })
+    try {
+        const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${newSearch}`);
+        const data = await response.json();
+        let bookStore = [];
 
-            const cardWrapper = document.querySelector('.card-wrapper');
-            JSON.parse(localStorage.getItem('bookStore')) ?
-                JSON.parse(localStorage.getItem('bookStore')) : bookStore = [];
-            cardWrapper.innerHTML = "";
-            bookStore.map(item => {
+        const dataItems = data.items;
+        dataItems.forEach(arrItems => {
+            const bookInfo = arrItems.volumeInfo;
+            const books = {
+                id: arrItems.id,
+                image: bookInfo.imageLinks.thumbnail,
+                title: bookInfo.title || 'NA',
+                author: bookInfo.authors ? bookInfo.authors[0] : 'NA',
+                pageCount: bookInfo.pageCount || 'NA',
+                publisher: bookInfo.publisher || 'NA',
+            };
+            if (bookStore.length < dataItems.length) {
+                bookStore.push(books);
+            }
+            localStorage.setItem('bookStore', JSON.stringify(bookStore));
+        });
 
-                item.name == undefined ? item.name = 'NA' : item.name;
-                item.title == undefined ? item.title = 'NA' : item.title;
-                item.pageCount == undefined ? item.pageCount = 'NA' : item.pageCount;
-                item.publisher == undefined ? item.publisher = 'NA' : item.publisher;
-
-                cardWrapper.innerHTML += `
+        const cardWrapper = document.querySelector('.card-wrapper');
+        const booksInStorage = JSON.parse(localStorage.getItem('bookStore')) || [];
+        cardWrapper.innerHTML = "";
+        booksInStorage.forEach(item => {
+            cardWrapper.innerHTML += `
                 <div class="card">
                     <img class="image-top" src=${item.image} alt="${item.name}">
                     <div class="card-body">
@@ -81,13 +71,13 @@ inputBtn.addEventListener('click', (e) => {
                         <button class="buy-now">Buy Now</button>
                     </div>
                 </div>
-                `
-            })
-        }
-        fetchingData();
+            `;
+        });
+    } catch (error) {
+        console.error(error);
+    }
 
-    }
-    else {
-        cardContainer.classList.add('hide');
-    }
-})
+} else {
+    cardContainer.classList.add('hide');
+}
+});
