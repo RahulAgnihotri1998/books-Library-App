@@ -1,93 +1,65 @@
-const search = document.querySelector('.search');
-const cardContainer = document.querySelector('.container')
-const inputBtn = document.querySelector('.input-btn');
-const bookResults = document.querySelector('.bookResults');
+const searchHistory = localStorage.getItem('searchHistory') ? JSON.parse(localStorage.getItem('searchHistory')) : [];
 
-let bookCards = [];
-document.querySelectorAll('.card') ? bookCards = document.querySelectorAll('.card') : bookCards = [];
-const bookResultsShow = document.querySelector('.bookResults');
+const searchList = document.querySelector('.search-lists');
+searchList.innerHTML = searchHistory.map((search, index) => `
+  <div class="search-items">
+    <div class="id-name">
+      <div class="search-id">${index + 1}.</div>
+      <div class="search-name">${search.search}</div>
+    </div>
+    <div class="date-time">Searched On: ${search.date} at ${search.time}</div>
+  </div>
+`).join('');
 
-let searchHistory = [];
-localStorage.getItem('searchHistory') ? searchHistory = JSON.parse(localStorage.getItem('searchHistory')) : searchHistory = [];
+const cardContainer = document.querySelector('.container');
 
-inputBtn.addEventListener('click', (e) => {
-    e.preventDefault();
+function displayBookCards(bookStore) {
+  const cardWrapper = document.querySelector('.card-wrapper');
+  cardWrapper.innerHTML = bookStore.map(book => `
+    <div class="card">
+      <img class="image-top" src="${book.image}" alt="${book.title}">
+      <div class="card-body">
+        <h5 class="card-title">${book.title}</h5>
+        <p class="card-author">Author: ${book.author}</p>
+        <p class="card-page-count">Page Count: ${book.pageCount}</p>
+        <p class="card-publisher">Publisher: ${book.publisher}</p>
+      </div>
+      <div class="btn">
+        <a href="https://www.amazon.in/s?k=${book.title} ${book.author}" target="_blank"><button class="buy-now">Buy Now</button></a>
+      </div>
+    </div>
+  `).join('');
+}
 
-    bookResults.innerHTML = search.value;
+function fetchBookData(search) {
+  return fetch(`https://www.googleapis.com/books/v1/volumes?q=${search}`)
+    .then(response => response.json())
+    .then(data => {
+      const bookStore = data.items.map(book => {
+        const volumeInfo = book.volumeInfo;
+        return {
+          id: book.id,
+          image: volumeInfo.imageLinks?.thumbnail,
+          title: volumeInfo.title ?? 'NA',
+          author: volumeInfo.authors?.[0] ?? 'NA',
+          pageCount: volumeInfo.pageCount ?? 'NA',
+          publisher: volumeInfo.publisher ?? 'NA',
+        };
+      });
+      localStorage.setItem('bookStore', JSON.stringify(bookStore));
+      displayBookCards(bookStore);
+    });
+}
 
-    let myArr = search.value.split(' ');
-    let newSearch = myArr.join('+')
-
-    if (search.value != "") {
-
-        let searchHistory = [];
-        localStorage.getItem('searchHistory') ? searchHistory = JSON.parse(localStorage.getItem('searchHistory')) : searchHistory = [];
-
-        const date = new Date();
-        const searchHistoryNow = {
-            date: date.toLocaleDateString(),
-            time: date.toLocaleTimeString(),
-            search: search.value,
-        }
-        searchHistory.push(searchHistoryNow);
-        localStorage.setItem('searchHistory', JSON.stringify(searchHistory));
-
-        cardContainer.classList.remove('hide');
-        async function fetchingData() {
-            const response = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${newSearch}`);
-            const data = await response.json();
-            let bookStore = [];
-
-            const dataItems = data.items;
-            dataItems.map(arrItems => {
-                
-                const bookInfo = arrItems.volumeInfo;
-                const books = {
-                    id: arrItems.id,
-                    image: bookInfo.imageLinks.thumbnail,
-                    title: bookInfo.title,
-                    author: bookInfo.authors == undefined ? bookInfo.authors = ["NA"] : bookInfo.authors = bookInfo.authors[0],
-                    pageCount: bookInfo.pageCount,
-                    publisher: bookInfo.publisher,
-                    buyLink: bookInfo.buyLink || 'https://www.google.com/search?q=' + encodeURIComponent(books.title)
-                }
-                if (bookStore.length < dataItems.length) {
-                    bookStore.push(books);
-                }
-                localStorage.setItem('bookStore', JSON.stringify(bookStore));
-            })
-
-            const cardWrapper = document.querySelector('.card-wrapper');
-            JSON.parse(localStorage.getItem('bookStore')) ?
-                JSON.parse(localStorage.getItem('bookStore')) : bookStore = [];
-            cardWrapper.innerHTML = "";
-            bookStore.map(item => {
-
-                item.name == undefined ? item.name = 'NA' : item.name;
-                item.title == undefined ? item.title = 'NA' : item.title;
-                item.pageCount == undefined ? item.pageCount = 'NA' : item.pageCount;
-                item.publisher == undefined ? item.publisher = 'NA' : item.publisher;
-
-                cardWrapper.innerHTML += `
-                <div class="card">
-                    <img class="image-top" src=${item.image} alt="${item.name}">
-                    <div class="card-body">
-                        <h5 class="card-title">${item.title}</h5>
-                        <p class="card-author">Author: ${item.author}</p>
-                        <p class="card-page-count">Page Count: ${item.pageCount}</p>
-                        <p class="card-publisher">Publisher: ${item.publisher}</p>
-                    </div>
-                    <div class="btn">
-                        <a href="${item.buyLink}" target="_blank"><button class="buy-now">Buy Now</button></a>
-                    </div>
-                </div>
-                `
-            })
-        }
-        fetchingData();
-
+const searchItems = document.querySelectorAll('.search-items');
+searchItems.forEach(item => {
+  const search = item.querySelector('.search-name').innerText;
+  item.addEventListener('click', () => {
+    if (search !== '') {
+      cardContainer.classList.remove('hide');
+      fetchBookData(search);
+    } else {
+      cardContainer.classList.add('hide');
     }
-    else {
-        cardContainer.classList.add('hide');
-    }
-})
+  });
+});
