@@ -14,24 +14,28 @@ header{
     align-items: center;
     width: 100%;
     padding: 18px 30px;
-    background-color: rgb(242, 242, 242);
-    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    background-color: rgb(5, 5, 5);
+    box-shadow: 0 2px 5px rgba(182, 16, 16, 0.3);
+   
 }
 header h2{
-    background-color:rgb(242, 242, 242); ;
+    background-color: black;
+    color: rgb(245, 245, 245);
 }
 
 nav{
     display: flex;
     gap: 30px;
+    background-color: #0c0c0c;
 }
 
 nav a{
     font-size: 18px;
     text-decoration: none;
-    color: #333;
+    color: #f5f4f4;
     transition: all 0.3s ease-in-out;
     padding: 10px;
+    background-color: #0c0c0c;
 }
 
 nav a:hover{
@@ -44,7 +48,7 @@ nav a:hover{
     font-size: 18px;
     text-decoration: none;
     color: #fff;
-    background-color:rgb(242, 242, 242);;
+    background-color:rgb(8, 8, 8);;
     padding: 10px 20px;
     border-radius: 10px;
     cursor: pointer;
@@ -52,7 +56,7 @@ nav a:hover{
 }
 
 .nav-btn:hover{
-    background-color: #555;
+    background-color: #cc1313;
 }
 
 .previous-clear{
